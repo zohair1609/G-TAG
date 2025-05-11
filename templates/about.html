@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}About AutoPDI{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="container">
+        <h1>About AutoPDI</h1>
+        <p>Learn more about our automated vehicle inspection system</p>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card">
+                    <div class="card-body p-4 p-md-5">
+                        <h2 class="mb-4">Our Technology</h2>
+                        
+                        <div class="row mb-5">
+                            <div class="col-md-6">
+                                <h4><i class="fas fa-robot text-accent me-2"></i>Advanced AI</h4>
+                                <p>AutoPDI uses state-of-the-art YOLOv5 and VGG deep learning models trained on thousands of vehicle damage examples to provide highly accurate damage detection.</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h4><i class="fas fa-tachometer-alt text-accent me-2"></i>Real-time Analysis</h4>
+                                <p>Our system performs real-time analysis of vehicle images, identifying damages, their severity, and location within seconds.</p>
+                            </div>
+                        </div>
+                        
+                        <h2 class="mb-4">Key Features</h2>
+                        
+                        <div class="row mb-5">
+                            <div class="col-md-4 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-body text-center p-4">
+                                        <i class="fas fa-camera text-accent mb-3" style="font-size: 2.5rem;"></i>
+                                        <h5>Image Analysis</h5>
+                                        <p class="mb-0">Upload images for immediate damage detection with bounding boxes and confidence scores.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-body text-center p-4">
+                                        <i class="fas fa-clipboard-check text-accent mb-3" style="font-size: 2.5rem;"></i>
+                                        <h5>Inspection Checklist</h5>
+                                        <p class="mb-0">Comprehensive 20-point inspection with manual override capabilities.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-body text-center p-4">
+                                        <i class="fas fa-file-pdf text-accent mb-3" style="font-size: 2.5rem;"></i>
+                                        <h5>Report Generation</h5>
+                                        <p class="mb-0">Generate detailed PDF reports with damage analysis results and recommendations.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h2 class="mb-4">Use Cases</h2>
+                        
+                        <div class="mb-5">
+                            <div class="row">
+                                <div class="col-md-6 mb-4">
+                                    <h5><i class="fas fa-car-side me-2"></i>Car Dealerships</h5>
+                                    <p>Automate the inspection process for trade-ins and used car inventory.</p>
+                                </div>
+                                <div class="col-md-6 mb-4">
+                                    <h5><i class="fas fa-truck me-2"></i>Fleet Management</h5>
+                                    <p>Regularly inspect fleet vehicles to maintain quality and safety standards.</p>
+                                </div>
+                                <div class="col-md-6 mb-4">
+                                    <h5><i class="fas fa-money-check-alt me-2"></i>Insurance Companies</h5>
+                                    <p>Streamline claims processing with accurate damage assessment.</p>
+                                </div>
+                                <div class="col-md-6 mb-4">
+                                    <h5><i class="fas fa-tools me-2"></i>Auto Repair Shops</h5>
+                                    <p>Provide customers with transparent damage reports and repair estimates.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-5">
+                            <a href="/" class="btn btn-primary btn-lg">
+                                <i class="fas fa-home me-2"></i>Back to Home
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %} 

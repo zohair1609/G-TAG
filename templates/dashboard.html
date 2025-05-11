@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - AutoPDI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-card {
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .dashboard-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-card {
+        border-left: 4px solid var(--accent-color);
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: #94A3B8;
+        margin-bottom: 0;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+    
+    .recent-item {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--border-color);
+        transition: all 0.2s ease;
+    }
+    
+    .recent-item:last-child {
+        border-bottom: none;
+    }
+    
+    .recent-item:hover {
+        background-color: rgba(30, 41, 59, 0.5);
+    }
+    
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .status-pass {
+        background-color: rgba(52, 211, 153, 0.2);
+        color: var(--success-color);
+    }
+    
+    .status-fail {
+        background-color: rgba(255, 69, 103, 0.2);
+        color: var(--danger-color);
+    }
+    
+    .status-pending {
+        background-color: rgba(251, 191, 36, 0.2);
+        color: var(--warning-color);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="container">
+        <h1>PDI Dashboard</h1>
+        <p>Vehicle inspection analytics and performance metrics</p>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container">
+        <!-- Key Metrics -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-4 mb-md-0">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <p class="stat-label">Total Inspections</p>
+                        <p class="stat-value">1,248</p>
+                        <div class="d-flex align-items-center mt-2">
+                            <span class="text-success me-2"><i class="fas fa-arrow-up"></i> 12%</span>
+                            <small class="text-muted">vs last month</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4 mb-md-0">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <p class="stat-label">Pass Rate</p>
+                        <p class="stat-value">86%</p>
+                        <div class="d-flex align-items-center mt-2">
+                            <span class="text-success me-2"><i class="fas fa-arrow-up"></i> 4%</span>
+                            <small class="text-muted">vs last month</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4 mb-md-0">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <p class="stat-label">Avg. Inspection Time</p>
+                        <p class="stat-value">14m</p>
+                        <div class="d-flex align-items-center mt-2">
+                            <span class="text-success me-2"><i class="fas fa-arrow-down"></i> 8%</span>
+                            <small class="text-muted">vs last month</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <p class="stat-label">Damage Detection</p>
+                        <p class="stat-value">92%</p>
+                        <div class="d-flex align-items-center mt-2">
+                            <span class="text-success me-2"><i class="fas fa-arrow-up"></i> 2%</span>
+                            <small class="text-muted">accuracy rate</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row mb-4">
+            <div class="col-lg-8 mb-4 mb-lg-0">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Inspection Trends</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="trendsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Damage Types</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="damageTypesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Inspections and Vehicle Types -->
+        <div class="row">
+            <div class="col-lg-8 mb-4 mb-lg-0">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Recent Inspections</h5>
+                        <a href="#" class="btn btn-sm btn-outline-light">View All</a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="recent-item d-flex justify-content-between align-items-center p-3">
+                            <div>
+                                <h6 class="mb-1">Honda Civic 2022</h6>
+                                <p class="mb-0 text-muted small">VIN: 1HGCM82633A004352 • May 10, 2023</p>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="status-badge status-pass me-3">PASS</span>
+                                <a href="#" class="btn btn-sm btn-outline-light"><i class="fas fa-eye"></i></a>
+                            </div>
+                        </div>
+                        <div class="recent-item d-flex justify-content-between align-items-center p-3">
+                            <div>
+                                <h6 class="mb-1">Toyota Camry 2023</h6>
+                                <p class="mb-0 text-muted small">VIN: 4T1BF1FK5CU513879 • May 9, 2023</p>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="status-badge status-fail me-3">FAIL</span>
+                                <a href="#" class="btn btn-sm btn-outline-light"><i class="fas fa-eye"></i></a>
+                            </div>
+                        </div>
+                        <div class="recent-item d-flex justify-content-between align-items-center p-3">
+                            <div>
+                                <h6 class="mb-1">Ford F-150 2022</h6>
+                                <p class="mb-0 text-muted small">VIN: 1FTFW1ET5DFA04825 • May 9, 2023</p>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="status-badge status-pass me-3">PASS</span>
+                                <a href="#" class="btn btn-sm btn-outline-light"><i class="fas fa-eye"></i></a>
+                            </div>
+                        </div>
+                        <div class="recent-item d-flex justify-content-between align-items-center p-3">
+                            <div>
+                                <h6 class="mb-1">Chevrolet Malibu 2021</h6>
+                                <p class="mb-0 text-muted small">VIN: 1G1ZD5ST3JF127670 • May 8, 2023</p>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="status-badge status-pending me-3">PENDING</span>
+                                <a href="#" class="btn btn-sm btn-outline-light"><i class="fas fa-eye"></i></a>
+                            </div>
+                        </div>
+                        <div class="recent-item d-flex justify-content-between align-items-center p-3">
+                            <div>
+                                <h6 class="mb-1">Nissan Altima 2022</h6>
+                                <p class="mb-0 text-muted small">VIN: 1N4AL3AP8JC231892 • May 8, 2023</p>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="status-badge status-pass me-3">PASS</span>
+                                <a href="#" class="btn btn-sm btn-outline-light"><i class="fas fa-eye"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-car me-2"></i>Vehicle Types</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="vehicleTypesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set Chart.js defaults
+        Chart.defaults.color = '#E2E8F0';
+        Chart.defaults.borderColor = '#475569';
+        Chart.defaults.font.family = "'Poppins', sans-serif";
+        
+        // Inspection Trends Chart
+        const trendsCtx = document.getElementById('trendsChart').getContext('2d');
+        const trendsChart = new Chart(trendsCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [
+                    {
+                        label: 'Inspections',
+                        data: [65, 78, 90, 105, 125, 138, 142, 160, 175, 190, 210, 235],
+                        borderColor: '#00D1B2',
+                        backgroundColor: 'rgba(0, 209, 178, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Pass Rate (%)',
+                        data: [75, 72, 78, 80, 82, 85, 83, 86, 88, 87, 89, 90],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // Damage Types Chart
+        const damageCtx = document.getElementById('damageTypesChart').getContext('2d');
+        const damageChart = new Chart(damageCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Dents', 'Scratches', 'Broken Lights', 'Glass Damage', 'Other'],
+                datasets: [{
+                    data: [35, 25, 15, 10, 15],
+                    backgroundColor: [
+                        '#00D1B2',
+                        '#3b82f6',
+                        '#f43f5e',
+                        '#f59e0b',
+                        '#8b5cf6'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+        
+        // Vehicle Types Chart
+        const vehicleCtx = document.getElementById('vehicleTypesChart').getContext('2d');
+        const vehicleChart = new Chart(vehicleCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Sedan', 'SUV', 'Truck', 'Compact', 'Van'],
+                datasets: [{
+                    label: 'Inspections by Vehicle Type',
+                    data: [420, 350, 210, 180, 88],
+                    backgroundColor: [
+                        'rgba(0, 209, 178, 0.7)',
+                        'rgba(59, 130, 246, 0.7)',
+                        'rgba(244, 63, 94, 0.7)',
+                        'rgba(245, 158, 11, 0.7)',
+                        'rgba(139, 92, 246, 0.7)'
+                    ],
+                    borderWidth: 0,
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %} 

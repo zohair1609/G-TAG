@@ -1,0 +1,582 @@
+{% extends "base.html" %}
+
+{% block title %}Vehicle Tracking - AutoPDI{% endblock %}
+
+{% block content %}
+<section class="tracking-dashboard py-4">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-truck-moving me-2"></i>Real-Time Vehicle Tracking</h2>
+            
+            <!-- Vehicle Selector Dropdown -->
+            <div class="vehicle-selector">
+                <select id="vehicle-selector" class="form-select">
+                    {% for vehicle in vehicles %}
+                    <option value="{{ vehicle.vin }}">{{ vehicle.vin }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        
+        <div class="row">
+            <!-- Left Side - Status Cards -->
+            <div class="col-lg-8">
+                <div class="row">
+                    <!-- Vehicle Info -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Vehicle Information</h5>
+                            </div>
+                            <div class="card-body" id="vehicle-info">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="vehicle-image me-3">
+                                        <img src="{{ vehicles[0].image_path }}" alt="Vehicle" class="img-fluid rounded" onerror="this.src='https://via.placeholder.com/150x100?text=Vehicle'">
+                                    </div>
+                                    <div>
+                                        <h5 id="vehicle-vin">{{ vehicles[0].vin }}</h5>
+                                        <p class="mb-0 text-muted">Sedan • Gray • 2023</p>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Location:</strong> <span id="vehicle-location" class="badge" style="background-color: var(--accent-color);">{{ vehicles[0].location }}</span>
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Current Process:</strong> <span id="vehicle-step" class="badge" style="background-color: var(--warning-color);">{{ vehicles[0].step }}</span>
+                                </div>
+                                <div>
+                                    <strong>Time in System:</strong> <span>2h 15m</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tire Pressure and Diagnostics -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-tachometer-alt me-2"></i>Diagnostics</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="tire-pressure mb-3">
+                                    <h6><i class="fas fa-dharmachakra me-2"></i>Tire Pressure (PSI)</h6>
+                                    <div class="row">
+                                        <div class="col-6 text-center">
+                                            <div class="tire-box" id="front-left">
+                                                <p class="mb-0">FL</p>
+                                                <h5>{{ vehicles[0].tire_pressure[0] }}</h5>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 text-center">
+                                            <div class="tire-box" id="front-right">
+                                                <p class="mb-0">FR</p>
+                                                <h5>{{ vehicles[0].tire_pressure[1] }}</h5>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-2">
+                                        <div class="col-6 text-center">
+                                            <div class="tire-box" id="rear-left">
+                                                <p class="mb-0">RL</p>
+                                                <h5>{{ vehicles[0].tire_pressure[2] }}</h5>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 text-center">
+                                            <div class="tire-box" id="rear-right">
+                                                <p class="mb-0">RR</p>
+                                                <h5>{{ vehicles[0].tire_pressure[3] }}</h5>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="diagnostics-data">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span>Battery</span>
+                                        <div class="progress w-50">
+                                            <div class="progress-bar" style="width: 92%; background-color: var(--success-color);"></div>
+                                        </div>
+                                        <span>92%</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span>Fuel</span>
+                                        <div class="progress w-50">
+                                            <div class="progress-bar" style="width: 45%; background-color: var(--warning-color);"></div>
+                                        </div>
+                                        <span>45%</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span>Oil</span>
+                                        <div class="progress w-50">
+                                            <div class="progress-bar" style="width: 85%; background-color: var(--accent-color);"></div>
+                                        </div>
+                                        <span>85%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Damage Report -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-car-crash me-2"></i>Damage Report</h5>
+                            </div>
+                            <div class="card-body" id="damage-report">
+                                {% if vehicles[0].damage == 'None' %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-check-circle text-success fa-3x mb-3" style="color: var(--success-color) !important;"></i>
+                                    <h5>No damage detected</h5>
+                                    <p class="text-muted mb-0">Vehicle passed visual inspection</p>
+                                </div>
+                                {% else %}
+                                <div class="damage-item">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="damage-icon me-3">
+                                            <i class="fas fa-exclamation-triangle text-danger" style="color: var(--danger-color) !important;"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0">{{ vehicles[0].damage }}</h6>
+                                            <small class="text-danger" style="color: var(--danger-color) !important;">High severity - Requires repair</small>
+                                        </div>
+                                    </div>
+                                    <div class="damage-details bg-light p-2 rounded">
+                                        <small><strong>Detection:</strong> AI Model with 93% confidence</small><br>
+                                        <small><strong>Technician Notes:</strong> Impact damage, possible replacement needed</small>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="damage-item mt-3">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="damage-icon me-3">
+                                            <i class="fas fa-exclamation-circle text-warning" style="color: var(--warning-color) !important;"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0">Minor scratch on hood</h6>
+                                            <small class="text-warning" style="color: var(--warning-color) !important;">Low severity - Cosmetic only</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Location Map -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-map-marked-alt me-2"></i>Warehouse Location</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="warehouse-map position-relative">
+                                    <img src="{{ vehicles[0].map_location }}" class="img-fluid" alt="Warehouse Map" onerror="this.src='https://i.pinimg.com/736x/a7/5f/c5/a75fc5546010d9d5275ba53c0c00b867.jpg'">
+                                    <div class="vehicle-position" style="top: 60%; left: 40%;">
+                                        <i class="fas fa-car" style="color: var(--accent-color);"></i>
+                                    </div>
+                                    <div class="zone-highlight" id="zone-b">
+                                        <span>ZONE B</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Side - Inspection Process -->
+            <div class="col-lg-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>Inspection Process</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="inspection-timeline">
+                            <li class="completed">
+                                <div class="timeline-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6>Step 1: Vehicle Entry</h6>
+                                    <p class="mb-1">Vehicle entered inspection zone</p>
+                                    <small class="text-muted">10:30 AM</small>
+                                </div>
+                            </li>
+                            <li class="completed">
+                                <div class="timeline-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6>Step 2: Initial Scan</h6>
+                                    <p class="mb-1">VIN verification and diagnostics</p>
+                                    <small class="text-muted">10:35 AM</small>
+                                </div>
+                            </li>
+                            <li class="active">
+                                <div class="timeline-icon">
+                                    <i class="fas fa-sync fa-spin"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6>Step 3: AI Damage Scan</h6>
+                                    <p class="mb-1">360° exterior inspection</p>
+                                    <small class="text-muted">In progress</small>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="timeline-icon">
+                                    <i class="fas fa-circle"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6>Step 4: Technician Review</h6>
+                                    <p class="mb-1">Manual verification of AI findings</p>
+                                    <small class="text-muted">Pending</small>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="timeline-icon">
+                                    <i class="fas fa-circle"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6>Step 5: Report Generation</h6>
+                                    <p class="mb-1">Final inspection report</p>
+                                    <small class="text-muted">Pending</small>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Inspection Checklist -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-clipboard-check me-2"></i>Inspection Checklist</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="checklist-item">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <i class="fas fa-check-circle me-2" style="color: var(--success-color);"></i>
+                                    <span>Exterior Body Panels</span>
+                                </div>
+                                <small style="color: var(--danger-color);">Issue detected</small>
+                            </div>
+                        </div>
+                        <div class="checklist-item">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <i class="fas fa-check-circle me-2" style="color: var(--success-color);"></i>
+                                    <span>Lights & Signals</span>
+                                </div>
+                                <small style="color: var(--success-color);">Pass</small>
+                            </div>
+                        </div>
+                        <div class="checklist-item">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <i class="fas fa-check-circle me-2" style="color: var(--success-color);"></i>
+                                    <span>Tires & Wheels</span>
+                                </div>
+                                <small style="color: var(--warning-color);">Warning: Low Pressure</small>
+                            </div>
+                        </div>
+                        <div class="checklist-item">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <i class="fas fa-check-circle me-2" style="color: var(--success-color);"></i>
+                                    <span>Glass & Mirrors</span>
+                                </div>
+                                <small style="color: var(--success-color);">Pass</small>
+                            </div>
+                        </div>
+                        <div class="checklist-item">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <i class="fas fa-circle me-2" style="color: var(--border-color);"></i>
+                                    <span>Undercarriage</span>
+                                </div>
+                                <small class="text-muted">Pending</small>
+                            </div>
+                        </div>
+                        <div class="checklist-item">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <i class="fas fa-circle me-2" style="color: var(--border-color);"></i>
+                                    <span>Interior Condition</span>
+                                </div>
+                                <small class="text-muted">Pending</small>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid mt-3">
+                            <button id="next-vehicle" class="btn btn-primary" style="background-color: var(--accent-color); border: none;">
+                                <i class="fas fa-arrow-right me-2"></i>Next Vehicle
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Vehicle selector
+        const vehicleSelector = document.getElementById('vehicle-selector');
+        const vehicleData = JSON.parse('{{ vehicles|tojson|safe }}');
+        
+        vehicleSelector.addEventListener('change', function() {
+            const selectedVin = this.value;
+            const selectedVehicle = vehicleData.find(v => v.vin === selectedVin);
+            
+            if (selectedVehicle) {
+                // Update vehicle info
+                document.getElementById('vehicle-vin').textContent = selectedVehicle.vin;
+                document.getElementById('vehicle-location').textContent = selectedVehicle.location;
+                document.getElementById('vehicle-step').textContent = selectedVehicle.step;
+                
+                // Ensure badges have the correct styling
+                document.getElementById('vehicle-location').className = 'badge';
+                document.getElementById('vehicle-location').style.backgroundColor = 'var(--accent-color)';
+                document.getElementById('vehicle-step').className = 'badge';
+                document.getElementById('vehicle-step').style.backgroundColor = 'var(--warning-color)';
+                
+                // Update tire pressure
+                document.querySelector('#front-left h5').textContent = selectedVehicle.tire_pressure[0];
+                document.querySelector('#front-right h5').textContent = selectedVehicle.tire_pressure[1];
+                document.querySelector('#rear-left h5').textContent = selectedVehicle.tire_pressure[2];
+                document.querySelector('#rear-right h5').textContent = selectedVehicle.tire_pressure[3];
+                
+                // Update damage report
+                const damageReport = document.getElementById('damage-report');
+                if (selectedVehicle.damage === 'None') {
+                    damageReport.innerHTML = `
+                        <div class="text-center py-4">
+                            <i class="fas fa-check-circle text-success fa-3x mb-3" style="color: var(--success-color) !important;"></i>
+                            <h5>No damage detected</h5>
+                            <p class="text-muted mb-0">Vehicle passed visual inspection</p>
+                        </div>
+                    `;
+                } else {
+                    damageReport.innerHTML = `
+                        <div class="damage-item">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="damage-icon me-3">
+                                    <i class="fas fa-exclamation-triangle text-danger" style="color: var(--danger-color) !important;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">${selectedVehicle.damage}</h6>
+                                    <small class="text-danger" style="color: var(--danger-color) !important;">High severity - Requires repair</small>
+                                </div>
+                            </div>
+                            <div class="damage-details bg-light p-2 rounded">
+                                <small><strong>Detection:</strong> AI Model with 93% confidence</small><br>
+                                <small><strong>Technician Notes:</strong> Impact damage, possible replacement needed</small>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Update the timeline based on the current step
+                updateTimelineStatus(selectedVehicle.step);
+            }
+        });
+        
+        function updateTimelineStatus(currentStep) {
+            const timelineItems = document.querySelectorAll('.inspection-timeline li');
+            
+            timelineItems.forEach(item => {
+                item.classList.remove('completed', 'active');
+                item.querySelector('.timeline-icon i').className = 'fas fa-circle';
+            });
+            
+            let stepNumber = parseInt(currentStep.split(' ')[1]);
+            
+            for (let i = 0; i < timelineItems.length; i++) {
+                if (i < stepNumber - 1) {
+                    timelineItems[i].classList.add('completed');
+                    timelineItems[i].querySelector('.timeline-icon i').className = 'fas fa-check-circle';
+                } else if (i === stepNumber - 1) {
+                    timelineItems[i].classList.add('active');
+                    timelineItems[i].querySelector('.timeline-icon i').className = 'fas fa-sync fa-spin';
+                }
+            }
+        }
+        
+        // Next vehicle button
+        document.getElementById('next-vehicle').addEventListener('click', function() {
+            let currentIndex = vehicleSelector.selectedIndex;
+            if (currentIndex < vehicleSelector.options.length - 1) {
+                vehicleSelector.selectedIndex = currentIndex + 1;
+            } else {
+                vehicleSelector.selectedIndex = 0;
+            }
+            
+            // Trigger change event
+            vehicleSelector.dispatchEvent(new Event('change'));
+        });
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Vehicle Tracking Dashboard Styles */
+    .tracking-dashboard {
+        background-color: var(--background-dark);
+        min-height: calc(100vh - 160px);
+    }
+    
+    /* Card Styles */
+    .card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+        background-color: var(--card-bg);
+        color: var(--text-light);
+    }
+    
+    .card-header {
+        padding: 1rem;
+        font-weight: 600;
+        background-color: rgba(0, 209, 178, 0.1) !important;
+        border-bottom: 1px solid rgba(0, 209, 178, 0.2);
+    }
+    
+    /* Tire Pressure Display */
+    .tire-box {
+        background-color: rgba(30, 41, 59, 0.5);
+        border-radius: 8px;
+        padding: 10px;
+        margin: 5px;
+        border: 2px solid var(--accent-color);
+    }
+    
+    .tire-box h5 {
+        margin: 0;
+        font-weight: 700;
+        color: var(--accent-color);
+    }
+    
+    /* Inspection Timeline */
+    .inspection-timeline {
+        list-style: none;
+        padding: 0;
+        position: relative;
+    }
+    
+    .inspection-timeline:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 15px;
+        width: 2px;
+        background: var(--border-color);
+    }
+    
+    .inspection-timeline li {
+        position: relative;
+        padding-left: 40px;
+        margin-bottom: 20px;
+    }
+    
+    .inspection-timeline li:last-child {
+        margin-bottom: 0;
+    }
+    
+    .timeline-icon {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: var(--card-hover);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1;
+    }
+    
+    .inspection-timeline li.completed .timeline-icon {
+        background: var(--success-color);
+    }
+    
+    .inspection-timeline li.active .timeline-icon {
+        background: var(--accent-color);
+    }
+    
+    .timeline-content {
+        padding-bottom: 10px;
+    }
+    
+    .timeline-content h6 {
+        margin-bottom: 5px;
+        color: var(--text-light);
+    }
+    
+    .timeline-content p {
+        margin-bottom: 0;
+        font-size: 0.9rem;
+    }
+    
+    /* Checklist */
+    .checklist-item {
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .checklist-item:last-child {
+        border-bottom: none;
+    }
+    
+    /* Warehouse Map */
+    .warehouse-map {
+        height: 100%;
+    }
+    
+    .warehouse-map img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .vehicle-position {
+        position: absolute;
+        font-size: 1.5rem;
+        transform: translate(-50%, -50%);
+    }
+    
+    .zone-highlight {
+        position: absolute;
+        top: 50%;
+        left: 40%;
+        padding: 5px 10px;
+        background: rgba(15, 23, 42, 0.8);
+        border: 2px solid var(--danger-color);
+        border-radius: 5px;
+        color: white;
+        font-weight: bold;
+    }
+    
+    /* Progress Bars */
+    .progress {
+        height: 8px;
+        background-color: var(--card-hover);
+    }
+    
+    /* Damage Report */
+    .damage-icon {
+        font-size: 1.5rem;
+    }
+    
+    .damage-details {
+        background-color: var(--card-hover) !important;
+    }
+</style>
+{% endblock %} 

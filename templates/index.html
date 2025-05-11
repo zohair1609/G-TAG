@@ -1,0 +1,574 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="container">
+        <h1>AutoPDI – Vehicle Inspection System</h1>
+        <p>AI-powered automated inspection tool for car dealerships</p>
+    </div>
+</section>
+
+<!-- Main Content Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Image Upload Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-upload me-2"></i>Vehicle Image Upload</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" enctype="multipart/form-data" id="upload-form">
+                            <div id="upload-container" class="upload-container mb-4">
+                                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                <h5>Drag & Drop Image Here</h5>
+                                <p id="upload-filename">or click to browse files</p>
+                                <input type="file" id="file-input" name="file" accept=".jpg,.jpeg,.png" class="d-none" required>
+                            </div>
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-2"></i>Detect Damage
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+        </div>
+          </div>
+        </div>
+      
+      {% if result_image %}
+        <!-- Results Section (appears after image analysis) -->
+        <div class="result-container mt-5">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-search me-2"></i>Damage Analysis Results</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-4 mb-md-0">
+                            <h6 class="mb-3">Original Image</h6>
+                            <img src="{{ url_for('static', filename='uploads/' + original_image) }}" class="result-image w-100" alt="Original image">
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Detected Damage</h6>
+                            <img src="{{ result_image }}" class="result-image w-100" alt="Damage detection results">
+                        </div>
+                    </div>
+                    
+                    <!-- Damage Detection Table -->
+                    <div class="damage-table mt-4">
+                        <h6 class="mb-3">Detected Damage Types</h6>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-dark">
+                                <thead>
+                                    <tr>
+                                        <th>Damage Type</th>
+                                        <th>Location</th>
+                                        <th>Confidence</th>
+                                        <th>Severity</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if damage_data %}
+                                        {% for damage in damage_data %}
+                                        <tr>
+                                            <td>{{ damage.type }}</td>
+                                            <td>{{ damage.location }}</td>
+                                            <td>
+                                                {% if damage.confidence > 90 %}
+                                                <span class="confidence-badge confidence-high">{{ "%.1f"|format(damage.confidence) }}%</span>
+                                                {% elif damage.confidence > 75 %}
+                                                <span class="confidence-badge confidence-medium">{{ "%.1f"|format(damage.confidence) }}%</span>
+                                                {% else %}
+                                                <span class="confidence-badge confidence-low">{{ "%.1f"|format(damage.confidence) }}%</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ damage.severity }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                    <tr>
+                                        <td>Dent</td>
+                                        <td>Right Front Door</td>
+                                        <td>
+                                            <span class="confidence-badge confidence-high">98%</span>
+                                        </td>
+                                        <td>Medium</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Scratch</td>
+                                        <td>Front Bumper</td>
+                                        <td>
+                                            <span class="confidence-badge confidence-medium">85%</span>
+                                        </td>
+                                        <td>Light</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Broken Light</td>
+                                        <td>Left Taillight</td>
+                                        <td>
+                                            <span class="confidence-badge confidence-high">96%</span>
+                                        </td>
+                                        <td>Severe</td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Smart Inspection Checklist -->
+                    <div class="mt-5">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">Smart Inspection Checklist</h6>
+                            <div>
+                                <button id="auto-fill-checklist" class="btn btn-sm btn-outline-info me-2">
+                                    <i class="fas fa-magic me-1"></i>Auto Fill
+                                </button>
+                                <button id="reset-checklist" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-redo-alt me-1"></i>Reset
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="checklist-header p-3 d-flex justify-content-between bg-dark">
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-primary me-2">Auto-filled</span>
+                                    <small class="text-muted">AI-suggested inspection results</small>
+                                </div>
+                                <div>
+                                    <small class="text-muted me-2">Technician Override</small>
+                                    <div class="form-check form-switch d-inline-block">
+                                        <input class="form-check-input" type="checkbox" id="enable-override">
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="smart-checklist">
+                                <!-- Group 1: Exterior -->
+                                <div class="checklist-group">
+                                    <div class="checklist-group-header p-2 bg-dark">
+                                        <strong><i class="fas fa-car-side me-2"></i>Exterior Inspection</strong>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div>
+                                            <strong>Body Panels</strong>
+                                            <p class="mb-0 text-muted small">Check for dents, scratches and paint damage</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" class="checklist-switch" data-auto="fail">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div>
+                                            <strong>Windshield & Glass</strong>
+                                            <p class="mb-0 text-muted small">Check for cracks and chips</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" class="checklist-switch" data-auto="pass" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div>
+                                            <strong>Lights & Signals</strong>
+                                            <p class="mb-0 text-muted small">Check headlights, taillights and turn signals</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" class="checklist-switch" data-auto="fail">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div>
+                                            <strong>Mirrors</strong>
+                                            <p class="mb-0 text-muted small">Check side mirrors and rear-view mirror</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" class="checklist-switch" data-auto="pass" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div>
+                                            <strong>Trim & Moldings</strong>
+                                            <p class="mb-0 text-muted small">Check for damage or missing pieces</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" class="checklist-switch" data-auto="pass" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Group 2: Wheels & Tires -->
+                                <div class="checklist-group">
+                                    <div class="checklist-group-header p-2 bg-dark">
+                                        <strong><i class="fas fa-dharmachakra me-2"></i>Wheels & Tires</strong>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div>
+                                            <strong>Tire Condition</strong>
+                                            <p class="mb-0 text-muted small">Check tread depth and sidewall condition</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" class="checklist-switch" data-auto="pass" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div>
+                                            <strong>Wheel Alignment</strong>
+                                            <p class="mb-0 text-muted small">Check for proper alignment</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" class="checklist-switch" data-auto="pass" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div>
+                                            <strong>Wheel Condition</strong>
+                                            <p class="mb-0 text-muted small">Check for damage to rims</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" class="checklist-switch" data-auto="pass" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Group 3: Mechanical -->
+                                <div class="checklist-group">
+                                    <div class="checklist-group-header p-2 bg-dark">
+                                        <strong><i class="fas fa-cogs me-2"></i>Mechanical Systems</strong>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div>
+                                            <strong>Engine Performance</strong>
+                                            <p class="mb-0 text-muted small">Check for unusual noises or vibration</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" class="checklist-switch" data-auto="pass" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div>
+                                            <strong>Braking System</strong>
+                                            <p class="mb-0 text-muted small">Check brake pads and rotors</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" class="checklist-switch" data-auto="pass" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div>
+                                            <strong>Suspension</strong>
+                                            <p class="mb-0 text-muted small">Check shocks and struts</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" class="checklist-switch" data-auto="pass" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div>
+                                            <strong>Transmission</strong>
+                                            <p class="mb-0 text-muted small">Check for smooth operation</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" class="checklist-switch" data-auto="pass" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div>
+                                            <strong>Exhaust System</strong>
+                                            <p class="mb-0 text-muted small">Check for leaks or damage</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" class="checklist-switch" data-auto="pass" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Group 4: Fluids & Battery -->
+                                <div class="checklist-group">
+                                    <div class="checklist-group-header p-2 bg-dark">
+                                        <strong><i class="fas fa-tint me-2"></i>Fluids & Electrical</strong>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div>
+                                            <strong>Engine Oil</strong>
+                                            <p class="mb-0 text-muted small">Check level and condition</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" class="checklist-switch" data-auto="pass" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div>
+                                            <strong>Coolant</strong>
+                                            <p class="mb-0 text-muted small">Check level and condition</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" class="checklist-switch" data-auto="pass" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div>
+                                            <strong>Battery</strong>
+                                            <p class="mb-0 text-muted small">Check condition and connections</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" class="checklist-switch" data-auto="pass" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div>
+                                            <strong>Electrical Systems</strong>
+                                            <p class="mb-0 text-muted small">Check all electrical components</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" class="checklist-switch" data-auto="pass" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Group 5: Interior -->
+                                <div class="checklist-group">
+                                    <div class="checklist-group-header p-2 bg-dark">
+                                        <strong><i class="fas fa-couch me-2"></i>Interior</strong>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div>
+                                            <strong>Seats & Upholstery</strong>
+                                            <p class="mb-0 text-muted small">Check for damage or stains</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" class="checklist-switch" data-auto="pass" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div>
+                                            <strong>Dashboard & Controls</strong>
+                                            <p class="mb-0 text-muted small">Check functionality of all controls</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" class="checklist-switch" data-auto="pass" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="checklist-item">
+                                        <div>
+                                            <strong>HVAC System</strong>
+                                            <p class="mb-0 text-muted small">Check heating and air conditioning</p>
+                                        </div>
+                                        <label class="switch">
+                                            <input type="checkbox" class="checklist-switch" data-auto="pass" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Summary Section -->
+                    <div class="summary-section">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-0">Inspection Summary</h5>
+                                <p class="mb-0 text-muted" id="summary-status">17/20 checks passed</p>
+                            </div>
+                            <span class="summary-badge badge-fail" id="summary-badge">FAIL</span>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <small class="text-muted d-block">Inspection Date</small>
+                                <strong>{{ '%B %d, %Y'|now('local') }}</strong>
+                            </div>
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <small class="text-muted d-block">Vehicle Identifier</small>
+                                <strong>VIN: 1HGCM82633A004352</strong>
+                            </div>
+                            <div class="col-md-4">
+                                <small class="text-muted d-block">Inspector</small>
+                                <strong>AutoPDI AI System</strong>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-center">
+                            <button id="generate-report" class="btn btn-primary">
+                                <i class="fas fa-file-pdf me-2"></i>Generate Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+      </div>
+      {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Smart Checklist functionality
+        const enableOverride = document.getElementById('enable-override');
+        const autoFillBtn = document.getElementById('auto-fill-checklist');
+        const resetBtn = document.getElementById('reset-checklist');
+        const checklistSwitches = document.querySelectorAll('.checklist-switch');
+        
+        // Enable/disable technician override
+        if (enableOverride) {
+            enableOverride.addEventListener('change', function() {
+                const switches = document.querySelectorAll('.checklist-switch');
+                switches.forEach(function(switchEl) {
+                    switchEl.disabled = !enableOverride.checked;
+                });
+                
+                if (enableOverride.checked) {
+                    showToast('Technician override enabled', 'success');
+                } else {
+                    showToast('Technician override disabled', 'info');
+                    autoFillChecklist(); // Reset to auto values when disabling override
+                }
+            });
+        }
+        
+        // Auto-fill checklist based on data-auto attributes
+        function autoFillChecklist() {
+            checklistSwitches.forEach(function(switchEl) {
+                const autoValue = switchEl.getAttribute('data-auto');
+                switchEl.checked = autoValue === 'pass';
+                
+                // Update parent item class
+                const listItem = switchEl.closest('.checklist-item');
+                if (listItem) {
+                    if (autoValue === 'pass') {
+                        listItem.classList.add('passed');
+                        listItem.classList.remove('failed');
+                    } else {
+                        listItem.classList.add('failed');
+                        listItem.classList.remove('passed');
+                    }
+                }
+            });
+            
+            updateSummary();
+        }
+        
+        // Reset checklist to default state
+        function resetChecklist() {
+            checklistSwitches.forEach(function(switchEl) {
+                switchEl.checked = false;
+                
+                // Update parent item class
+                const listItem = switchEl.closest('.checklist-item');
+                if (listItem) {
+                    listItem.classList.remove('passed');
+                    listItem.classList.add('failed');
+                }
+            });
+            
+            updateSummary();
+        }
+        
+        // Update summary based on checklist status
+        function updateSummary() {
+            const totalItems = checklistSwitches.length;
+            let passedItems = 0;
+            
+            checklistSwitches.forEach(function(switchEl) {
+                if (switchEl.checked) {
+                    passedItems++;
+                }
+            });
+            
+            const summaryStatus = document.getElementById('summary-status');
+            const summaryBadge = document.getElementById('summary-badge');
+            
+            if (summaryStatus && summaryBadge) {
+                summaryStatus.textContent = `${passedItems}/${totalItems} checks passed`;
+                
+                if (passedItems === totalItems) {
+                    summaryBadge.textContent = 'PASS';
+                    summaryBadge.className = 'summary-badge badge-pass';
+                } else {
+                    summaryBadge.textContent = 'FAIL';
+                    summaryBadge.className = 'summary-badge badge-fail';
+                }
+            }
+        }
+        
+        // Event listeners for buttons
+        if (autoFillBtn) {
+            autoFillBtn.addEventListener('click', function() {
+                autoFillChecklist();
+                showToast('Checklist auto-filled by AI', 'success');
+            });
+        }
+        
+        if (resetBtn) {
+            resetBtn.addEventListener('click', function() {
+                resetChecklist();
+                showToast('Checklist has been reset', 'info');
+            });
+        }
+        
+        // Event listeners for checklist switches
+        checklistSwitches.forEach(function(switchEl) {
+            switchEl.addEventListener('change', function() {
+                const listItem = this.closest('.checklist-item');
+                if (listItem) {
+                    if (this.checked) {
+                        listItem.classList.add('passed');
+                        listItem.classList.remove('failed');
+                    } else {
+                        listItem.classList.add('failed');
+                        listItem.classList.remove('passed');
+                    }
+                }
+                updateSummary();
+            });
+            
+            // Disable by default (require override)
+            switchEl.disabled = true;
+        });
+        
+        // Initialize checklist
+        autoFillChecklist();
+        
+        // Toast notification function
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type === 'success' ? 'toast-success' : type === 'info' ? 'toast-info' : 'toast-error'}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 100);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+      });
+    </script>
+{% endblock %}

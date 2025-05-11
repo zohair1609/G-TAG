@@ -1,0 +1,7 @@
+{
+  "battery_voltage": 12.3,
+  "oil_level": "low",
+  "brake_status": "warning",
+  "tire_pressure": [30, 31, 29, 28],
+  "engine_temp": 105
+} 
